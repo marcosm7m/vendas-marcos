@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import type { Sale } from '@/lib/types';
+import { maskCpf } from '@/lib/utils';
 
 type SalesTableProps = {
   sales: Sale[];
@@ -51,10 +52,10 @@ export function SalesTable({ sales }: SalesTableProps) {
               <TableCell>
                 <div className="font-medium">{sale.customerName}</div>
                 <div className="text-sm text-muted-foreground md:hidden">
-                  {sale.customerCpf}
+                  {maskCpf(sale.customerCpf)}
                 </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell">{sale.customerCpf}</TableCell>
+              <TableCell className="hidden md:table-cell">{maskCpf(sale.customerCpf)}</TableCell>
               <TableCell>
                 <div>{sale.product}</div>
                 {sale.observations && (

@@ -38,19 +38,23 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Sale } from '@/lib/types';
 import { validateCpf } from '@/ai/flows/validate-cpf';
 import { useToast } from '@/hooks/use-toast';
+import { maskCpf } from '@/lib/utils';
 
 const cpfSchema = z.string().refine(
   async (cpf) => {
-    if (!cpf || !/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(cpf)) return true; // Let the regex validation handle format
+    const numericCpf = cpf.replace(/\D/g, '');
+    if (numericCpf.length !== 11) return true;
     try {
-      const result = await validateCpf({ cpf });
+      // The AI validator expects the formatted CPF
+      const formattedCpf = maskCpf(numericCpf);
+      const result = await validateCpf({ cpf: formattedCpf });
       return result.isValid;
     } catch (error) {
       return false;
     }
   },
   {
-    message: 'Formato de CPF inválido ou erro na validação.',
+    message: 'CPF inválido ou erro na validação.',
   }
 );
 
@@ -60,7 +64,9 @@ const formSchema = z.object({
   }),
   customerCpf: z
     .string()
-    .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, 'CPF inválido. Use o formato XXX.XXX.XXX-XX')
+    .min(11, 'CPF deve ter 11 dígitos.')
+    .max(14, 'CPF inválido.') // 14 to account for mask
+    .transform((cpf) => cpf.replace(/\D/g, '')) // Store only numbers
     .pipe(cpfSchema),
   customerPhone: z.string().min(10, {
     message: 'O telefone deve ter pelo menos 10 caracteres.',
@@ -90,13 +96,15 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
     },
   });
 
-  const { formState } = form;
+  const { formState, setValue, watch } = form;
+  const customerCpf = watch('customerCpf');
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const newSale: Sale = {
         id: new Date().getTime().toString(),
         ...values,
+        customerCpf: values.customerCpf.replace(/\D/g, ''), // Ensure it's just numbers
         date: new Date().toISOString(),
       };
       onSaleAdd(newSale);
@@ -153,7 +161,15 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
                   <FormItem>
                     <FormLabel>CPF</FormLabel>
                     <FormControl>
-                      <Input placeholder="123.456.789-00" {...field} />
+                      <Input
+                        placeholder="123.456.789-00"
+                        {...field}
+                        onChange={(e) => {
+                          const { value } = e.target;
+                          setValue('customerCpf', maskCpf(value));
+                        }}
+                        value={maskCpf(customerCpf)}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
