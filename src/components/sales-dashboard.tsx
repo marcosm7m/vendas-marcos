@@ -15,28 +15,7 @@ import { AddSaleDialog } from '@/components/add-sale-dialog';
 import { SalesTable } from '@/components/sales-table';
 import type { Sale } from '@/lib/types';
 
-const initialSales: Sale[] = [
-  {
-    id: '1',
-    customerName: 'João da Silva',
-    customerCpf: '111.222.333-44',
-    customerPhone: '(11) 98765-4321',
-    product: 'Tinta Acrílica Fosca',
-    containerSize: 'galao',
-    observations: 'Cor Branca Neve, 3.6L',
-    date: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    customerName: 'Maria Oliveira',
-    customerCpf: '555.666.777-88',
-    customerPhone: '(21) 91234-5678',
-    product: 'Esmalte Sintético Brilhante',
-    containerSize: 'lata',
-    observations: 'Cor Azul Royal, 900ml',
-    date: new Date(new Date().setDate(new Date().getDate() - 1)).toISOString(),
-  },
-];
+const initialSales: Sale[] = [];
 
 export default function SalesDashboard() {
   const [sales, setSales] = useState<Sale[]>([]);
