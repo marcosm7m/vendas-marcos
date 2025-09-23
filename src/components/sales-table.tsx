@@ -1,11 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
@@ -14,9 +15,22 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Sale } from '@/lib/types';
 import { maskCpf } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 type SalesTableProps = {
   sales: Sale[];
+  onSaleDelete: (saleId: string) => void;
 };
 
 const containerSizeMap = {
@@ -25,7 +39,7 @@ const containerSizeMap = {
   balde: 'Balde',
 };
 
-export function SalesTable({ sales }: SalesTableProps) {
+export function SalesTable({ sales, onSaleDelete }: SalesTableProps) {
   if (sales.length === 0) {
     return (
       <div className="flex items-center justify-center rounded-md border border-dashed p-12 text-center">
@@ -43,7 +57,8 @@ export function SalesTable({ sales }: SalesTableProps) {
             <TableHead className="hidden md:table-cell">CPF</TableHead>
             <TableHead>Produto</TableHead>
             <TableHead className="hidden sm:table-cell">Data</TableHead>
-            <TableHead className="text-right">Tamanho</TableHead>
+            <TableHead>Tamanho</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -67,8 +82,35 @@ export function SalesTable({ sales }: SalesTableProps) {
               <TableCell className="hidden sm:table-cell">
                 {format(new Date(sale.date), "d MMM, yyyy", { locale: ptBR })}
               </TableCell>
-              <TableCell className="text-right">
+              <TableCell>
                 <Badge variant="secondary">{containerSizeMap[sale.containerSize]}</Badge>
+              </TableCell>
+              <TableCell className="text-right">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Essa ação não pode ser desfeita. Isso irá deletar permanentemente a venda
+                        dos seus registros.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => onSaleDelete(sale.id)}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Deletar
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </TableCell>
             </TableRow>
           ))}

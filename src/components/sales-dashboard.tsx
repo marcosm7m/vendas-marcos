@@ -55,6 +55,10 @@ export default function SalesDashboard() {
     setSales((prevSales) => [newSale, ...prevSales]);
   };
 
+  const handleSaleDelete = (saleId: string) => {
+    setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
+  };
+
   const filteredSales = useMemo(() => {
     if (!searchTerm) return sales;
     const lowercasedTerm = searchTerm.toLowerCase();
@@ -95,7 +99,7 @@ export default function SalesDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <SalesTable sales={filteredSales} />
+          <SalesTable sales={filteredSales} onSaleDelete={handleSaleDelete} />
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
           Mostrando {filteredSales.length} de {sales.length} vendas.
