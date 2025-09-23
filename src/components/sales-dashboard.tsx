@@ -37,7 +37,6 @@ export default function SalesDashboard() {
     };
 
     const fetchSales = async () => {
-      if (!user) return;
       setLoading(true);
       try {
         const q = query(

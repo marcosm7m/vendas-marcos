@@ -8,7 +8,7 @@ import {
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth-provider';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -33,6 +33,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
 
   useEffect(() => {
     if (!loading && user) {
@@ -59,8 +61,7 @@ export default function LoginPage() {
         friendlyMessage = 'Senha incorreta. Tente novamente.';
       } else if (error.code === 'auth/email-already-in-use') {
         friendlyMessage = 'Este e-mail já está em uso por outra conta.';
-      }
-       else if (error.code === 'auth/weak-password') {
+      } else if (error.code === 'auth/weak-password') {
         friendlyMessage = 'A senha deve ter pelo menos 6 caracteres.';
       }
 
@@ -73,6 +74,16 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
+  
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (activeTab === 'login') {
+      handleAuthAction('signIn');
+    } else {
+      handleAuthAction('signUp');
+    }
+  };
+
 
   if (loading || (!loading && user)) {
     return (
@@ -88,81 +99,107 @@ export default function LoginPage() {
         <h1 className="font-headline text-5xl font-bold text-primary">TintTrack</h1>
         <p className="mt-2 text-lg text-muted-foreground">Seu assistente para controle de vendas.</p>
       </div>
-      <Tabs defaultValue="login" className="w-full max-w-md">
+      <Tabs defaultValue="login" className="w-full max-w-md" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Entrar</TabsTrigger>
           <TabsTrigger value="register">Registrar</TabsTrigger>
         </TabsList>
         <TabsContent value="login">
           <Card>
-            <CardHeader>
-              <CardTitle>Login</CardTitle>
-              <CardDescription>
-                Acesse sua conta para gerenciar suas vendas.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <Input
-                  id="login-email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Senha</Label>
-                <Input
-                  id="login-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <Button onClick={() => handleAuthAction('signIn')} disabled={isSubmitting} className="w-full">
-                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Entrar'}
-              </Button>
-            </CardContent>
+             <form onSubmit={handleFormSubmit}>
+              <CardHeader>
+                <CardTitle>Login</CardTitle>
+                <CardDescription>
+                  Acesse sua conta para gerenciar suas vendas.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+                <div className="space-y-2 relative">
+                  <Label htmlFor="login-password">Senha</Label>
+                  <Input
+                    id="login-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                   <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-7 h-7 w-7"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </div>
+                <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : 'Entrar'}
+                </Button>
+              </CardContent>
+            </form>
           </Card>
         </TabsContent>
         <TabsContent value="register">
           <Card>
-            <CardHeader>
-              <CardTitle>Registrar</CardTitle>
-              <CardDescription>
-                Crie uma nova conta para começar a usar o TintTrack.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="register-email">Email</Label>
-                <Input
-                  id="register-email"
-                  type="email"
-                  placeholder="m@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="register-password">Senha</Label>
-                <Input
-                  id="register-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <Button onClick={() => handleAuthAction('signUp')} disabled={isSubmitting} className="w-full">
-                {isSubmitting ? <Loader2 className="animate-spin" /> : 'Criar Conta'}
-              </Button>
-            </CardContent>
+            <form onSubmit={handleFormSubmit}>
+              <CardHeader>
+                <CardTitle>Registrar</CardTitle>
+                <CardDescription>
+                  Crie uma nova conta para começar a usar o TintTrack.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="register-email">Email</Label>
+                  <Input
+                    id="register-email"
+                    type="email"
+                    placeholder="m@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                </div>
+                <div className="space-y-2 relative">
+                  <Label htmlFor="register-password">Senha</Label>
+                  <Input
+                    id="register-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                  />
+                   <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-7 h-7 w-7"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                  >
+                    {showPassword ? <EyeOff /> : <Eye />}
+                  </Button>
+                </div>
+                <Button type="submit" disabled={isSubmitting} className="w-full">
+                  {isSubmitting ? <Loader2 className="animate-spin" /> : 'Criar Conta'}
+                </Button>
+              </CardContent>
+            </form>
           </Card>
         </TabsContent>
       </Tabs>
