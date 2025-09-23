@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2, Trash2, Pencil } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -27,6 +27,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { EditSaleDialog } from './edit-sale-dialog';
+import { useAuth } from './auth-provider';
 
 
 type SalesTableProps = {
@@ -43,6 +44,7 @@ const containerSizeMap = {
 };
 
 export function SalesTable({ sales, onSaleDelete, onSaleUpdate, loading }: SalesTableProps) {
+  const { user } = useAuth();
   if (loading) {
     return (
       <div className="flex items-center justify-center rounded-md border border-dashed p-12 text-center">
@@ -97,34 +99,36 @@ export function SalesTable({ sales, onSaleDelete, onSaleUpdate, loading }: Sales
                 <Badge variant="secondary">{containerSizeMap[sale.containerSize]}</Badge>
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex items-center justify-end gap-2">
-                  <EditSaleDialog sale={sale} onSaleUpdate={onSaleUpdate} />
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Essa ação não pode ser desfeita. Isso irá deletar permanentemente a venda
-                          dos seus registros.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => onSaleDelete(sale.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Deletar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
+                {user && user.uid === sale.userId ? (
+                  <div className="flex items-center justify-end gap-2">
+                    <EditSaleDialog sale={sale} onSaleUpdate={onSaleUpdate} />
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Essa ação não pode ser desfeita. Isso irá deletar permanentemente a venda
+                            dos seus registros.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => onSaleDelete(sale.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Deletar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                ) : null }
               </TableCell>
             </TableRow>
           ))}

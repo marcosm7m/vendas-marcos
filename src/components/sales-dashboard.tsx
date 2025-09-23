@@ -15,7 +15,7 @@ import { AddSaleDialog } from '@/components/add-sale-dialog';
 import { SalesTable } from '@/components/sales-table';
 import type { Sale } from '@/lib/types';
 import { useAuth } from './auth-provider';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -31,17 +31,11 @@ export default function SalesDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    };
-
     const fetchSales = async () => {
       setLoading(true);
       try {
         const q = query(
           collection(db, 'sales'),
-          where('userId', '==', user.uid),
           orderBy('date', 'desc')
         );
         const querySnapshot = await getDocs(q);
@@ -62,7 +56,7 @@ export default function SalesDashboard() {
     };
     
     fetchSales();
-  }, [user, toast]);
+  }, [toast]);
 
   const handleSaleAdd = (newSale: Sale) => {
     setSales((prevSales) => [newSale, ...prevSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -131,10 +125,12 @@ export default function SalesDashboard() {
           <h1 className="font-headline text-4xl font-bold text-primary">TintTrack</h1>
           <p className="text-muted-foreground">Seu assistente para controle de vendas de tintas.</p>
         </div>
-        <Button variant="ghost" onClick={handleSignOut}>
-          <LogOut className="mr-2" />
-          Sair
-        </Button>
+        {user && (
+          <Button variant="ghost" onClick={handleSignOut}>
+            <LogOut className="mr-2" />
+            Sair
+          </Button>
+        )}
       </header>
       <Card>
         <CardHeader>
@@ -152,7 +148,7 @@ export default function SalesDashboard() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <AddSaleDialog onSaleAdd={handleSaleAdd} />
+            {user && <AddSaleDialog onSaleAdd={handleSaleAdd} />}
           </div>
         </CardHeader>
         <CardContent>
