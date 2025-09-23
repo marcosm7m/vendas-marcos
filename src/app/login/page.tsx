@@ -145,7 +145,7 @@ export default function LoginPage() {
                   type="email"
                   placeholder="m@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.targe.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
                 />
               </div>
