@@ -67,10 +67,10 @@ export function SalesTable({ sales, onSaleDelete, onSaleUpdate, loading }: Sales
         <TableHeader>
           <TableRow>
             <TableHead>Cliente</TableHead>
-            <TableHead className="hidden md:table-cell">CPF</TableHead>
+            <TableHead className="hidden lg:table-cell">CPF</TableHead>
             <TableHead>Produto</TableHead>
             <TableHead className="hidden sm:table-cell">Data</TableHead>
-            <TableHead>Tamanho</TableHead>
+            <TableHead className="hidden md:table-cell">Tamanho</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -79,15 +79,15 @@ export function SalesTable({ sales, onSaleDelete, onSaleUpdate, loading }: Sales
             <TableRow key={sale.id}>
               <TableCell>
                 <div className="font-medium">{sale.customerName}</div>
-                <div className="text-sm text-muted-foreground md:hidden">
+                <div className="text-sm text-muted-foreground lg:hidden">
                   {maskCpf(sale.customerCpf)}
                 </div>
               </TableCell>
-              <TableCell className="hidden md:table-cell">{maskCpf(sale.customerCpf)}</TableCell>
+              <TableCell className="hidden lg:table-cell">{maskCpf(sale.customerCpf)}</TableCell>
               <TableCell>
                 <div>{sale.product}</div>
                 {sale.observations && (
-                  <p className="text-sm text-muted-foreground truncate max-w-xs">
+                  <p className="text-sm text-muted-foreground truncate max-w-[120px] sm:max-w-xs">
                     {sale.observations}
                   </p>
                 )}
@@ -95,7 +95,7 @@ export function SalesTable({ sales, onSaleDelete, onSaleUpdate, loading }: Sales
               <TableCell className="hidden sm:table-cell">
                 {format(new Date(sale.date), "d MMM, yyyy", { locale: ptBR })}
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden md:table-cell">
                 <Badge variant="secondary">{containerSizeMap[sale.containerSize]}</Badge>
               </TableCell>
               <TableCell className="text-right">

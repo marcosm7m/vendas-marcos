@@ -7,6 +7,13 @@ import { AuthProvider } from '@/components/auth-provider';
 export const metadata: Metadata = {
   title: 'TintTrack',
   description: 'Controle de compras de clientes de tintas',
+  manifest: '/manifest.json',
+  themeColor: '#DB2777',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'TintTrack',
+  },
 };
 
 export default function RootLayout({
@@ -20,6 +27,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="icon" href="/icons/icon-48x48.png" sizes="any" />
       </head>
       <body className={cn('font-body antialiased')}>
         <AuthProvider>

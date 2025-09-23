@@ -10,11 +10,12 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // We don't need to redirect anymore since the page is public.
-    // However, you might want to keep this logic if you have other private pages.
+    if (!loading && !user) {
+      router.push('/login');
+    }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
