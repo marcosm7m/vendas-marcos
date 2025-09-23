@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2, Pencil } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -26,10 +26,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { EditSaleDialog } from './edit-sale-dialog';
+
 
 type SalesTableProps = {
   sales: Sale[];
   onSaleDelete: (saleId: string) => void;
+  onSaleUpdate: (sale: Sale) => void;
   loading: boolean;
 };
 
@@ -39,7 +42,7 @@ const containerSizeMap = {
   balde: 'Balde',
 };
 
-export function SalesTable({ sales, onSaleDelete, loading }: SalesTableProps) {
+export function SalesTable({ sales, onSaleDelete, onSaleUpdate, loading }: SalesTableProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center rounded-md border border-dashed p-12 text-center">
@@ -94,31 +97,34 @@ export function SalesTable({ sales, onSaleDelete, loading }: SalesTableProps) {
                 <Badge variant="secondary">{containerSizeMap[sale.containerSize]}</Badge>
               </TableCell>
               <TableCell className="text-right">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Essa ação não pode ser desfeita. Isso irá deletar permanentemente a venda
-                        dos seus registros.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => onSaleDelete(sale.id)}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      >
-                        Deletar
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                <div className="flex items-center justify-end gap-2">
+                  <EditSaleDialog sale={sale} onSaleUpdate={onSaleUpdate} />
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Essa ação não pode ser desfeita. Isso irá deletar permanentemente a venda
+                          dos seus registros.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => onSaleDelete(sale.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Deletar
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </TableCell>
             </TableRow>
           ))}

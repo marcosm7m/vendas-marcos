@@ -15,7 +15,7 @@ import { AddSaleDialog } from '@/components/add-sale-dialog';
 import { SalesTable } from '@/components/sales-table';
 import type { Sale } from '@/lib/types';
 import { useAuth } from './auth-provider';
-import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -62,6 +62,29 @@ export default function SalesDashboard() {
 
   const handleSaleAdd = (newSale: Sale) => {
     setSales((prevSales) => [newSale, ...prevSales]);
+  };
+
+  const handleSaleUpdate = async (updatedSale: Sale) => {
+    try {
+      const saleRef = doc(db, 'sales', updatedSale.id);
+      await updateDoc(saleRef, {
+        ...updatedSale
+      });
+      setSales((prevSales) =>
+        prevSales.map((sale) => (sale.id === updatedSale.id ? updatedSale : sale))
+      );
+      toast({
+        title: 'Sucesso!',
+        description: 'Venda atualizada com sucesso.',
+      });
+    } catch (error) {
+      console.error('Error updating sale:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível atualizar a venda.',
+      });
+    }
   };
 
   const handleSaleDelete = async (saleId: string) => {
@@ -129,7 +152,7 @@ export default function SalesDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <SalesTable sales={filteredSales} onSaleDelete={handleSaleDelete} loading={loading} />
+          <SalesTable sales={filteredSales} onSaleDelete={handleSaleDelete} onSaleUpdate={handleSaleUpdate} loading={loading} />
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
           Mostrando {filteredSales.length} de {sales.length} vendas.
