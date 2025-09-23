@@ -36,27 +36,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Sale } from '@/lib/types';
-import { validateCpf } from '@/ai/flows/validate-cpf';
 import { useToast } from '@/hooks/use-toast';
 import { maskCpf } from '@/lib/utils';
-
-const cpfSchema = z.string().refine(
-  async (cpf) => {
-    const numericCpf = cpf.replace(/\D/g, '');
-    if (numericCpf.length !== 11) return true;
-    try {
-      // The AI validator expects the formatted CPF
-      const formattedCpf = maskCpf(numericCpf);
-      const result = await validateCpf({ cpf: formattedCpf });
-      return result.isValid;
-    } catch (error) {
-      return false;
-    }
-  },
-  {
-    message: 'CPF inválido ou erro na validação.',
-  }
-);
 
 const formSchema = z.object({
   customerName: z.string().min(2, {
@@ -66,8 +47,7 @@ const formSchema = z.object({
     .string()
     .min(11, 'CPF deve ter 11 dígitos.')
     .max(14, 'CPF inválido.') // 14 to account for mask
-    .transform((cpf) => cpf.replace(/\D/g, '')) // Store only numbers
-    .pipe(cpfSchema),
+    .transform((cpf) => cpf.replace(/\D/g, '')), // Store only numbers
   customerPhone: z.string().min(10, {
     message: 'O telefone deve ter pelo menos 10 caracteres.',
   }),
