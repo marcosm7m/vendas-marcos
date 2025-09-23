@@ -33,6 +33,10 @@ export default function SalesDashboard() {
   useEffect(() => {
     const fetchSales = async () => {
       setLoading(true);
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       try {
         const q = query(
           collection(db, 'sales'),
@@ -56,7 +60,7 @@ export default function SalesDashboard() {
     };
     
     fetchSales();
-  }, [toast]);
+  }, [user, toast]);
 
   const handleSaleAdd = (newSale: Sale) => {
     setSales((prevSales) => [newSale, ...prevSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
