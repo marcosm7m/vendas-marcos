@@ -15,6 +15,7 @@ import { AddSaleDialog } from '@/components/add-sale-dialog';
 import { SalesTable } from '@/components/sales-table';
 import type { Sale } from '@/lib/types';
 
+// A tabela começará vazia.
 const initialSales: Sale[] = [];
 
 export default function SalesDashboard() {
@@ -24,6 +25,7 @@ export default function SalesDashboard() {
 
   useEffect(() => {
     try {
+      // Tenta carregar vendas salvas no armazenamento local do seu navegador.
       const storedSales = localStorage.getItem('tinttrack-sales');
       if (storedSales) {
         setSales(JSON.parse(storedSales));
@@ -41,6 +43,7 @@ export default function SalesDashboard() {
   useEffect(() => {
     if (isMounted) {
       try {
+        // Salva as vendas no armazenamento local sempre que a lista for alterada.
         localStorage.setItem('tinttrack-sales', JSON.stringify(sales));
       } catch (error) {
         console.error("Failed to save sales to localStorage", error);
@@ -63,7 +66,7 @@ export default function SalesDashboard() {
   }, [sales, searchTerm]);
 
   if (!isMounted) {
-    return null; // Or a loading skeleton
+    return null; // Evita renderizar no servidor para não ter problemas com o localStorage.
   }
 
   return (
