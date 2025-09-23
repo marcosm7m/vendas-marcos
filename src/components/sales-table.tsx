@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -31,6 +30,7 @@ import {
 type SalesTableProps = {
   sales: Sale[];
   onSaleDelete: (saleId: string) => void;
+  loading: boolean;
 };
 
 const containerSizeMap = {
@@ -39,7 +39,15 @@ const containerSizeMap = {
   balde: 'Balde',
 };
 
-export function SalesTable({ sales, onSaleDelete }: SalesTableProps) {
+export function SalesTable({ sales, onSaleDelete, loading }: SalesTableProps) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center rounded-md border border-dashed p-12 text-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   if (sales.length === 0) {
     return (
       <div className="flex items-center justify-center rounded-md border border-dashed p-12 text-center">

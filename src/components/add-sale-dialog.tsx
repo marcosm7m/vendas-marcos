@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, Plus, Save } from 'lucide-react';
-import { format } from 'date-fns';
+import { addDoc, collection } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +20,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -38,16 +37,14 @@ import { Textarea } from '@/components/ui/textarea';
 import type { Sale } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { maskCpf } from '@/lib/utils';
+import { useAuth } from './auth-provider';
+import { db } from '@/lib/firebase';
 
 const formSchema = z.object({
   customerName: z.string().min(2, {
     message: 'O nome deve ter pelo menos 2 caracteres.',
   }),
-  customerCpf: z
-    .string()
-    .min(11, 'CPF deve ter 11 dígitos.')
-    .max(14, 'CPF inválido.') // 14 to account for mask
-    .transform((cpf) => cpf.replace(/\D/g, '')), // Store only numbers
+  customerCpf: z.string().transform((cpf) => cpf.replace(/\D/g, '')),
   customerPhone: z.string().min(10, {
     message: 'O telefone deve ter pelo menos 10 caracteres.',
   }),
@@ -65,6 +62,8 @@ type AddSaleDialogProps = {
 export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -80,13 +79,28 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
   const customerCpf = watch('customerCpf');
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Você precisa estar logado para registrar uma venda.',
+      });
+      return;
+    }
     try {
-      const newSale: Sale = {
-        id: new Date().getTime().toString(),
+      const saleData = {
         ...values,
-        customerCpf: values.customerCpf.replace(/\D/g, ''), // Ensure it's just numbers
+        userId: user.uid,
         date: new Date().toISOString(),
       };
+
+      const docRef = await addDoc(collection(db, 'sales'), saleData);
+      
+      const newSale: Sale = {
+        ...saleData,
+        id: docRef.id,
+      };
+
       onSaleAdd(newSale);
       toast({
         title: 'Sucesso!',
@@ -95,6 +109,7 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
       form.reset();
       setOpen(false);
     } catch (error) {
+      console.error("Error adding document: ", error);
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -146,7 +161,7 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
                         {...field}
                         onChange={(e) => {
                           const { value } = e.target;
-                          setValue('customerCpf', maskCpf(value));
+                          setValue('customerCpf', value);
                         }}
                         value={maskCpf(customerCpf)}
                       />

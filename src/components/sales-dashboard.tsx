@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { Search, LogOut } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -14,49 +14,77 @@ import { Input } from '@/components/ui/input';
 import { AddSaleDialog } from '@/components/add-sale-dialog';
 import { SalesTable } from '@/components/sales-table';
 import type { Sale } from '@/lib/types';
-
-// A tabela começará vazia.
-const initialSales: Sale[] = [];
+import { useAuth } from './auth-provider';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy } from 'firebase/firestore';
+import { db, auth } from '@/lib/firebase';
+import { Button } from './ui/button';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SalesDashboard() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isMounted, setIsMounted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      // Tenta carregar vendas salvas no armazenamento local do seu navegador.
-      const storedSales = localStorage.getItem('tinttrack-sales');
-      if (storedSales) {
-        setSales(JSON.parse(storedSales));
-      } else {
-        setSales(initialSales);
-      }
-    } catch (error) {
-      console.error("Failed to load sales from localStorage", error);
-      setSales(initialSales);
-    } finally {
-      setIsMounted(true);
+    if (user) {
+      const fetchSales = async () => {
+        setLoading(true);
+        try {
+          const q = query(
+            collection(db, 'sales'),
+            where('userId', '==', user.uid),
+            orderBy('date', 'desc')
+          );
+          const querySnapshot = await getDocs(q);
+          const salesData = querySnapshot.docs.map(
+            (doc) => ({ id: doc.id, ...doc.data() } as Sale)
+          );
+          setSales(salesData);
+        } catch (error) {
+          console.error('Error fetching sales:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Erro ao buscar vendas',
+            description: 'Não foi possível carregar os dados do Firestore.',
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchSales();
     }
-  }, []);
-
-  useEffect(() => {
-    if (isMounted) {
-      try {
-        // Salva as vendas no armazenamento local sempre que a lista for alterada.
-        localStorage.setItem('tinttrack-sales', JSON.stringify(sales));
-      } catch (error) {
-        console.error("Failed to save sales to localStorage", error);
-      }
-    }
-  }, [sales, isMounted]);
+  }, [user, toast]);
 
   const handleSaleAdd = (newSale: Sale) => {
     setSales((prevSales) => [newSale, ...prevSales]);
   };
 
-  const handleSaleDelete = (saleId: string) => {
-    setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
+  const handleSaleDelete = async (saleId: string) => {
+    try {
+      await deleteDoc(doc(db, 'sales', saleId));
+      setSales((prevSales) => prevSales.filter((sale) => sale.id !== saleId));
+      toast({
+        title: 'Sucesso!',
+        description: 'Venda deletada com sucesso.',
+      });
+    } catch (error) {
+      console.error('Error deleting sale:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Não foi possível deletar a venda.',
+      });
+    }
+  };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
   };
 
   const filteredSales = useMemo(() => {
@@ -69,15 +97,17 @@ export default function SalesDashboard() {
     );
   }, [sales, searchTerm]);
 
-  if (!isMounted) {
-    return null; // Evita renderizar no servidor para não ter problemas com o localStorage.
-  }
-
   return (
     <>
-      <header className="mb-8">
-        <h1 className="font-headline text-4xl font-bold text-primary">TintTrack</h1>
-        <p className="text-muted-foreground">Seu assistente para controle de vendas de tintas.</p>
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="font-headline text-4xl font-bold text-primary">TintTrack</h1>
+          <p className="text-muted-foreground">Seu assistente para controle de vendas de tintas.</p>
+        </div>
+        <Button variant="ghost" onClick={handleSignOut}>
+          <LogOut className="mr-2" />
+          Sair
+        </Button>
       </header>
       <Card>
         <CardHeader>
@@ -99,7 +129,7 @@ export default function SalesDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <SalesTable sales={filteredSales} onSaleDelete={handleSaleDelete} />
+          <SalesTable sales={filteredSales} onSaleDelete={handleSaleDelete} loading={loading} />
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
           Mostrando {filteredSales.length} de {sales.length} vendas.

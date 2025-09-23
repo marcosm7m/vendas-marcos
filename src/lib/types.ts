@@ -1,5 +1,6 @@
 export type Sale = {
   id: string;
+  userId: string;
   customerName: string;
   customerCpf: string;
   customerPhone: string;
