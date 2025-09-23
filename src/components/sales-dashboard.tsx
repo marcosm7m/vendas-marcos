@@ -37,6 +37,7 @@ export default function SalesDashboard() {
     };
 
     const fetchSales = async () => {
+      if (!user) return;
       setLoading(true);
       try {
         const q = query(
@@ -65,9 +66,9 @@ export default function SalesDashboard() {
   }, [user, toast]);
 
   const handleSaleAdd = (newSale: Sale) => {
-    setSales((prevSales) => [newSale, ...prevSales]);
+    setSales((prevSales) => [newSale, ...prevSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
-
+  
   const handleSaleUpdate = async (updatedSale: Sale) => {
     try {
       const saleRef = doc(db, 'sales', updatedSale.id);
