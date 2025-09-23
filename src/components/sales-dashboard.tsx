@@ -31,33 +31,37 @@ export default function SalesDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      const fetchSales = async () => {
-        setLoading(true);
-        try {
-          const q = query(
-            collection(db, 'sales'),
-            where('userId', '==', user.uid),
-            orderBy('date', 'desc')
-          );
-          const querySnapshot = await getDocs(q);
-          const salesData = querySnapshot.docs.map(
-            (doc) => ({ id: doc.id, ...doc.data() } as Sale)
-          );
-          setSales(salesData);
-        } catch (error) {
-          console.error('Error fetching sales:', error);
-          toast({
-            variant: 'destructive',
-            title: 'Erro ao buscar vendas',
-            description: 'Não foi possível carregar os dados do Firestore.',
-          });
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchSales();
-    }
+    if (!user) {
+      setLoading(false);
+      return;
+    };
+
+    const fetchSales = async () => {
+      setLoading(true);
+      try {
+        const q = query(
+          collection(db, 'sales'),
+          where('userId', '==', user.uid),
+          orderBy('date', 'desc')
+        );
+        const querySnapshot = await getDocs(q);
+        const salesData = querySnapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Sale)
+        );
+        setSales(salesData);
+      } catch (error) {
+        console.error('Error fetching sales:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao buscar vendas',
+          description: 'Não foi possível carregar os dados. Verifique suas regras de segurança no Firebase.',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSales();
   }, [user, toast]);
 
   const handleSaleAdd = (newSale: Sale) => {
