@@ -1,11 +1,11 @@
 'use client';
+import SalesDashboard from '@/components/sales-dashboard';
+import { useAuth } from '@/components/auth-provider';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/components/auth-provider';
-import CustomerDashboard from '@/components/customer-dashboard';
 
-export default function Home() {
+export default function CustomerPage({ params }: { params: { cpf: string } }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -23,9 +23,12 @@ export default function Home() {
     );
   }
 
+  // Decode CPF from URL
+  const customerCpf = decodeURIComponent(params.cpf);
+
   return (
     <main className="container mx-auto p-4 md:p-8">
-      <CustomerDashboard />
+      <SalesDashboard customerCpf={customerCpf} />
     </main>
   );
 }

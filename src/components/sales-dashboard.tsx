@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, LogOut } from 'lucide-react';
+import { LogOut, User, Users } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -10,21 +10,20 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { AddSaleDialog } from '@/components/add-sale-dialog';
-import { SalesTable } from '@/components/sales-table';
 import type { Sale } from '@/lib/types';
 import { useAuth } from './auth-provider';
-import { collection, query, getDocs, deleteDoc, doc, orderBy, updateDoc } from 'firebase/firestore';
+import { collection, query, getDocs, deleteDoc, doc, orderBy, updateDoc, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { SalesTable } from './sales-table';
 
-export default function SalesDashboard() {
+export default function SalesDashboard({ customerCpf }: { customerCpf: string }) {
   const [sales, setSales] = useState<Sale[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [customerName, setCustomerName] = useState('');
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const router = useRouter();
@@ -32,14 +31,15 @@ export default function SalesDashboard() {
 
   useEffect(() => {
     const fetchSales = async () => {
-      setLoading(true);
       if (!user) {
         setLoading(false);
         return;
       }
+      setLoading(true);
       try {
         const q = query(
           collection(db, 'sales'),
+          where('customerCpf', '==', customerCpf),
           orderBy('date', 'desc')
         );
         const querySnapshot = await getDocs(q);
@@ -47,20 +47,25 @@ export default function SalesDashboard() {
           (doc) => ({ id: doc.id, ...doc.data() } as Sale)
         );
         setSales(salesData);
+        if (salesData.length > 0) {
+            setCustomerName(salesData[0].customerName);
+        }
       } catch (error) {
         console.error('Error fetching sales:', error);
         toast({
           variant: 'destructive',
           title: 'Erro ao buscar vendas',
-          description: 'Não foi possível carregar os dados. Verifique suas regras de segurança no Firebase.',
+          description: 'Não foi possível carregar os dados.',
         });
       } finally {
         setLoading(false);
       }
     };
     
-    fetchSales();
-  }, [user, toast]);
+    if (customerCpf) {
+        fetchSales();
+    }
+  }, [user, customerCpf, toast]);
 
   const handleSaleAdd = (newSale: Sale) => {
     setSales((prevSales) => [newSale, ...prevSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
@@ -112,22 +117,16 @@ export default function SalesDashboard() {
     router.push('/login');
   };
 
-  const filteredSales = useMemo(() => {
-    if (!searchTerm) return sales;
-    const lowercasedTerm = searchTerm.toLowerCase();
-    return sales.filter(
-      (sale) =>
-        sale.customerName.toLowerCase().includes(lowercasedTerm) ||
-        sale.customerCpf.includes(searchTerm)
-    );
-  }, [sales, searchTerm]);
-
   return (
     <>
-      <header className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="font-headline text-4xl font-bold text-primary">TintTrack</h1>
-          <p className="text-muted-foreground">Seu assistente para controle de vendas de tintas.</p>
+      <header className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className='flex items-center gap-4'>
+          <Users className='h-10 w-10 text-primary hidden sm:block' />
+          <div>
+            <Button variant="link" onClick={() => router.push('/')} className="p-0 h-auto text-muted-foreground">Clientes</Button>
+            <h1 className="font-headline text-3xl font-bold text-primary">{customerName}</h1>
+            <p className="text-muted-foreground">Histórico de compras do cliente.</p>
+          </div>
         </div>
         {user && (
           <Button variant="ghost" onClick={handleSignOut}>
@@ -138,28 +137,19 @@ export default function SalesDashboard() {
       </header>
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline text-2xl">Histórico de Vendas</CardTitle>
-          <CardDescription>
-            Visualize e gerencie todas as suas vendas registradas.
-          </CardDescription>
-          <div className="mt-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative w-full sm:max-w-xs">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou CPF..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+          <div className='flex justify-between items-center'>
+            <CardTitle className="font-headline text-2xl">Histórico de Vendas</CardTitle>
             {user && <AddSaleDialog onSaleAdd={handleSaleAdd} />}
           </div>
+          <CardDescription>
+            Visualize e gerencie todas as vendas para este cliente.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <SalesTable sales={filteredSales} onSaleDelete={handleSaleDelete} onSaleUpdate={handleSaleUpdate} loading={loading} />
+          <SalesTable sales={sales} onSaleDelete={handleSaleDelete} onSaleUpdate={handleSaleUpdate} loading={loading} />
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Mostrando {filteredSales.length} de {sales.length} vendas.
+          Mostrando {sales.length} vendas.
         </CardFooter>
       </Card>
     </>

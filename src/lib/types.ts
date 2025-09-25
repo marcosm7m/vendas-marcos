@@ -9,3 +9,10 @@ export type Sale = {
   observations: string;
   date: string;
 };
+
+export type Customer = {
+  cpf: string;
+  name: string;
+  phone: string;
+  lastPurchase: string;
+};
