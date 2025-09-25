@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LogOut, Users } from 'lucide-react';
+import { LogOut, Users, Pencil } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -19,6 +19,7 @@ import { signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { SalesTable } from './sales-table';
+import { EditCustomerDialog } from './edit-customer-dialog';
 
 export default function SalesDashboard({ customerCpf }: { customerCpf: string }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -64,6 +65,14 @@ export default function SalesDashboard({ customerCpf }: { customerCpf: string })
     fetchCustomer();
   }, [user, customerCpf, toast]);
   
+  const handleCustomerUpdate = (updatedCustomerData: Partial<Customer>) => {
+    if (!customer) return;
+    setCustomer(prevCustomer => {
+        if (!prevCustomer) return null;
+        return { ...prevCustomer, ...updatedCustomerData };
+    });
+  }
+
   const handleSaleUpdate = async (updatedSale: Sale) => {
     if (!customer) return;
 
@@ -144,7 +153,10 @@ export default function SalesDashboard({ customerCpf }: { customerCpf: string })
           <Users className='h-10 w-10 text-primary hidden sm:block' />
           <div>
             <Button variant="link" onClick={() => router.push('/')} className="p-0 h-auto text-muted-foreground">Clientes</Button>
-            <h1 className="font-headline text-3xl font-bold text-primary">{customer?.name || 'Carregando...'}</h1>
+             <div className="flex items-center gap-2">
+              <h1 className="font-headline text-3xl font-bold text-primary">{customer?.name || 'Carregando...'}</h1>
+              {customer && <EditCustomerDialog customer={customer} onCustomerUpdate={handleCustomerUpdate} />}
+            </div>
             <p className="text-muted-foreground">Histórico de compras do cliente.</p>
           </div>
         </div>
