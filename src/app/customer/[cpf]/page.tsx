@@ -1,5 +1,6 @@
 'use client';
-import { use, useEffect } from 'react';
+
+import { useEffect } from 'react';
 import SalesDashboard from '@/components/sales-dashboard';
 import { useAuth } from '@/components/auth-provider';
 import { useRouter } from 'next/navigation';
@@ -11,9 +12,7 @@ type PageProps = {
   };
 };
 
-// Next.js now recommends this pattern for accessing params in Client Components.
-// We keep the component's function signature clean and use `use` hook.
-function CustomerPageComponent({ params }: PageProps) {
+export default function CustomerPage({ params }: PageProps) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
@@ -31,7 +30,7 @@ function CustomerPageComponent({ params }: PageProps) {
     );
   }
 
-  // Decode CPF from URL
+  // Decodifica o CPF diretamente da URL, que é a forma correta para Client Components.
   const customerCpf = decodeURIComponent(params.cpf);
 
   return (
@@ -39,13 +38,4 @@ function CustomerPageComponent({ params }: PageProps) {
       <SalesDashboard customerCpf={customerCpf} />
     </main>
   );
-}
-
-export default function CustomerPage({ params }: PageProps) {
-  // `use(Promise)` is the new way to handle params, which are now Promises.
-  // We can't use it directly in the main export, so we create a wrapper component.
-  // This is a common pattern for this new Next.js feature.
-  // However, for client components, directly accessing params is still supported
-  // for migration. Let's fix it the simple way.
-  return <CustomerPageComponent params={params} />;
 }
