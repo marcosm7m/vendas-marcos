@@ -35,9 +35,7 @@ const formSchema = z.object({
   customerName: z.string().min(2, {
     message: 'O nome deve ter pelo menos 2 caracteres.',
   }),
-  customerPhone: z.string().min(10, {
-    message: 'O telefone deve ter pelo menos 10 caracteres.',
-  }),
+  customerPhone: z.string().optional(),
 });
 
 type EditCustomerDialogProps = {
@@ -74,7 +72,7 @@ export function EditCustomerDialog({ customer, onCustomerUpdate }: EditCustomerD
         const customerRef = doc(db, 'customers', customer.id);
         const updatedData = {
             name: values.customerName,
-            phone: values.customerPhone,
+            phone: values.customerPhone || '',
         }
         await updateDoc(customerRef, updatedData);
         
@@ -131,7 +129,7 @@ export function EditCustomerDialog({ customer, onCustomerUpdate }: EditCustomerD
                 name="customerPhone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Telefone</FormLabel>
+                    <FormLabel>Telefone (Opcional)</FormLabel>
                     <FormControl>
                       <Input placeholder="(11) 99999-9999" {...field} />
                     </FormControl>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LogOut, Users, Pencil } from 'lucide-react';
+import { LogOut, Users, Pencil, Phone } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { SalesTable } from './sales-table';
 import { EditCustomerDialog } from './edit-customer-dialog';
+import { maskCpf } from '@/lib/utils';
 
 export default function SalesDashboard({ customerCpf }: { customerCpf: string }) {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -157,7 +158,15 @@ export default function SalesDashboard({ customerCpf }: { customerCpf: string })
               <h1 className="font-headline text-3xl font-bold text-primary">{customer?.name || 'Carregando...'}</h1>
               {customer && <EditCustomerDialog customer={customer} onCustomerUpdate={handleCustomerUpdate} />}
             </div>
-            <p className="text-muted-foreground">Histórico de compras do cliente.</p>
+            <p className="text-muted-foreground">{customer ? maskCpf(customer.cpf) : '...'}</p>
+             {customer?.phone && (
+              <a href={`tel:${customer.phone}`}>
+                <Button variant="outline" className="mt-2">
+                  <Phone className="mr-2" />
+                  Ligar para o cliente
+                </Button>
+              </a>
+            )}
           </div>
         </div>
         {user && (

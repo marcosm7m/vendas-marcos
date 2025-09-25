@@ -45,9 +45,7 @@ const formSchema = z.object({
     message: 'O nome deve ter pelo menos 2 caracteres.',
   }),
   customerCpf: z.string().transform((cpf) => cpf.replace(/\D/g, '')),
-  customerPhone: z.string().min(10, {
-    message: 'O telefone deve ter pelo menos 10 caracteres.',
-  }),
+  customerPhone: z.string().optional(),
   product: z.string().min(2, {
     message: 'O nome do produto deve ter pelo menos 2 caracteres.',
   }),
@@ -111,7 +109,7 @@ export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
           id: newCustomerRef.id,
           cpf: values.customerCpf,
           name: values.customerName,
-          phone: values.customerPhone,
+          phone: values.customerPhone || '',
           sales: [newSale],
           lastPurchase: newSale.date,
           createdBy: user.uid, // Add the creator's UID
@@ -123,20 +121,24 @@ export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
         const customerData = customerDoc.data() as Customer;
         const updatedSales = [...customerData.sales, newSale].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         
-        updatedCustomer = {
-          ...customerData,
-          name: values.customerName, // Update name and phone in case it changed
-          phone: values.customerPhone,
+        const customerUpdatePayload: Partial<Customer> = {
+          name: values.customerName,
           sales: updatedSales,
           lastPurchase: updatedSales[0].date,
-          createdBy: customerData.createdBy || user.uid, // Preserve original creator, or set if missing
         };
-        batch.update(customerDoc.ref, {
-           name: updatedCustomer.name,
-           phone: updatedCustomer.phone,
-           sales: updatedCustomer.sales,
-           lastPurchase: updatedCustomer.lastPurchase,
-        });
+
+        // Only update phone if a new one is provided
+        if (values.customerPhone) {
+          customerUpdatePayload.phone = values.customerPhone;
+        }
+
+        updatedCustomer = {
+          ...customerData,
+          ...customerUpdatePayload,
+          phone: values.customerPhone || customerData.phone, // ensure phone is correct for local state update
+        };
+        
+        batch.update(customerDoc.ref, customerUpdatePayload);
       }
 
       await batch.commit();
@@ -215,7 +217,7 @@ export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
                 name="customerPhone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Telefone</FormLabel>
+                    <FormLabel>Telefone (Opcional)</FormLabel>
                     <FormControl>
                       <Input placeholder="(11) 99999-9999" {...field} />
                     </FormControl>
