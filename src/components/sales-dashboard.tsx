@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LogOut, Users, Pencil, Phone } from 'lucide-react';
+import { LogOut, Users, Pencil, Phone, MessageSquare } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -146,6 +146,8 @@ export default function SalesDashboard({ customerCpf }: { customerCpf: string })
     await signOut(auth);
     router.push('/login');
   };
+  
+  const cleanPhoneNumber = (phone: string) => phone.replace(/\D/g, '');
 
   return (
     <>
@@ -160,12 +162,20 @@ export default function SalesDashboard({ customerCpf }: { customerCpf: string })
             </div>
             <p className="text-muted-foreground">{customer ? maskCpf(customer.cpf) : '...'}</p>
              {customer?.phone && (
-              <a href={`tel:${customer.phone}`}>
-                <Button variant="outline" className="mt-2">
-                  <Phone className="mr-2" />
-                  Ligar para o cliente
-                </Button>
-              </a>
+              <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                <a href={`tel:${customer.phone}`} className="flex-grow">
+                  <Button variant="outline" className="w-full">
+                    <Phone className="mr-2" />
+                    Ligar para o cliente
+                  </Button>
+                </a>
+                <a href={`https://wa.me/55${cleanPhoneNumber(customer.phone)}`} target="_blank" rel="noopener noreferrer" className="flex-grow">
+                   <Button variant="outline" className="w-full bg-green-500 text-white hover:bg-green-600 hover:text-white">
+                    <MessageSquare className="mr-2" />
+                    Chamar no WhatsApp
+                  </Button>
+                </a>
+              </div>
             )}
           </div>
         </div>
