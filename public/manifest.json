@@ -2,10 +2,6 @@
   "name": "TintTrack",
   "short_name": "TintTrack",
   "description": "Seu assistente para controle de vendas de tintas.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#f4f4f5",
-  "theme_color": "#DB2777",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
@@ -28,9 +24,9 @@
       "type": "image/png"
     },
     {
-      "src"  : "/icons/icon-152x152.png",
+      "src": "/icons/icon-152x152.png",
       "sizes": "152x152",
-      "type" : "image/png"
+      "type": "image/png"
     },
     {
       "src": "/icons/icon-192x192.png",
@@ -47,5 +43,9 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f2f7",
+  "theme_color": "#DB2777"
 }
