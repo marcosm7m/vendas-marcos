@@ -12,9 +12,9 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { AddSaleDialog } from '@/components/add-sale-dialog';
-import type { Sale, Customer } from '@/lib/types';
+import type { Customer } from '@/lib/types';
 import { useAuth } from './auth-provider';
-import { collection, query, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, where } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 import { Button } from './ui/button';
 import { signOut } from 'firebase/auth';
@@ -26,7 +26,7 @@ import { ptBR } from 'date-fns/locale';
 import { Loader2 } from 'lucide-react';
 
 export default function CustomerDashboard() {
-  const [sales, setSales] = useState<Sale[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
@@ -34,39 +34,46 @@ export default function CustomerDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchSales = async () => {
+    const fetchCustomers = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
       setLoading(true);
       try {
-        const q = query(
-          collection(db, 'sales'),
-          orderBy('date', 'desc')
-        );
+        const q = query(collection(db, 'customers'), orderBy('lastPurchase', 'desc'));
         const querySnapshot = await getDocs(q);
-        const salesData = querySnapshot.docs.map(
-          (doc) => ({ id: doc.id, ...doc.data() } as Sale)
+        const customersData = querySnapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Customer)
         );
-        setSales(salesData);
+        setCustomers(customersData);
       } catch (error) {
-        console.error('Error fetching sales:', error);
+        console.error('Error fetching customers:', error);
         toast({
           variant: 'destructive',
-          title: 'Erro ao buscar vendas',
-          description: 'Não foi possível carregar os dados.',
+          title: 'Erro ao buscar clientes',
+          description: 'Não foi possível carregar os dados. Verifique suas regras de segurança no Firestore.',
         });
       } finally {
         setLoading(false);
       }
     };
     
-    fetchSales();
+    fetchCustomers();
   }, [user, toast]);
 
-  const handleSaleAdd = (newSale: Sale) => {
-    setSales((prevSales) => [newSale, ...prevSales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  const handleCustomerUpdate = (updatedCustomer: Customer) => {
+    setCustomers((prevCustomers) => {
+      const existingCustomerIndex = prevCustomers.findIndex(c => c.id === updatedCustomer.id);
+      let newCustomers;
+      if (existingCustomerIndex > -1) {
+        newCustomers = [...prevCustomers];
+        newCustomers[existingCustomerIndex] = updatedCustomer;
+      } else {
+        newCustomers = [updatedCustomer, ...prevCustomers];
+      }
+      return newCustomers.sort((a, b) => new Date(b.lastPurchase).getTime() - new Date(a.lastPurchase).getTime());
+    });
   };
 
   const handleSignOut = async () => {
@@ -74,30 +81,15 @@ export default function CustomerDashboard() {
     router.push('/login');
   };
 
-  const uniqueCustomers = useMemo(() => {
-    const customerMap = new Map<string, Customer>();
-    sales.forEach(sale => {
-      if (!customerMap.has(sale.customerCpf)) {
-        customerMap.set(sale.customerCpf, {
-          cpf: sale.customerCpf,
-          name: sale.customerName,
-          phone: sale.customerPhone,
-          lastPurchase: sale.date,
-        });
-      }
-    });
-    return Array.from(customerMap.values());
-  }, [sales]);
-
   const filteredCustomers = useMemo(() => {
-    if (!searchTerm) return uniqueCustomers;
+    if (!searchTerm) return customers;
     const lowercasedTerm = searchTerm.toLowerCase();
-    return uniqueCustomers.filter(
+    return customers.filter(
       (customer) =>
         customer.name.toLowerCase().includes(lowercasedTerm) ||
         customer.cpf.includes(searchTerm.replace(/\D/g, ''))
     );
-  }, [uniqueCustomers, searchTerm]);
+  }, [customers, searchTerm]);
 
   return (
     <>
@@ -132,7 +124,7 @@ export default function CustomerDashboard() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            {user && <AddSaleDialog onSaleAdd={handleSaleAdd} />}
+            {user && <AddSaleDialog onCustomerUpdate={handleCustomerUpdate} />}
           </div>
         </CardHeader>
         <CardContent>
@@ -144,7 +136,7 @@ export default function CustomerDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredCustomers.map(customer => (
                 <Card 
-                    key={customer.cpf} 
+                    key={customer.id} 
                     className="hover:shadow-lg hover:border-primary transition-all cursor-pointer flex flex-col"
                     onClick={() => router.push(`/customer/${customer.cpf}`)}
                 >
@@ -170,7 +162,7 @@ export default function CustomerDashboard() {
           )}
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Mostrando {filteredCustomers.length} de {uniqueCustomers.length} clientes.
+          Mostrando {filteredCustomers.length} de {customers.length} clientes.
         </CardFooter>
       </Card>
     </>

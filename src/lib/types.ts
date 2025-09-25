@@ -1,9 +1,6 @@
 export type Sale = {
   id: string;
   userId: string;
-  customerName: string;
-  customerCpf: string;
-  customerPhone: string;
   product: string;
   containerSize: 'lata' | 'galao' | 'balde';
   observations: string;
@@ -11,8 +8,10 @@ export type Sale = {
 };
 
 export type Customer = {
+  id: string;
   cpf: string;
   name: string;
   phone: string;
+  sales: Sale[];
   lastPurchase: string;
 };

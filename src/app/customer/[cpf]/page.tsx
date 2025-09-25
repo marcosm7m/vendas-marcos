@@ -30,7 +30,6 @@ export default function CustomerPage({ params }: PageProps) {
     );
   }
 
-  // Decodifica o CPF diretamente da URL, que é a forma correta para Client Components.
   const customerCpf = decodeURIComponent(params.cpf);
 
   return (

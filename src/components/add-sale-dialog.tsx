@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2, Plus, Save } from 'lucide-react';
-import { addDoc, collection } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, writeBatch } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Sale } from '@/lib/types';
+import type { Customer, Sale } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { maskCpf } from '@/lib/utils';
 import { useAuth } from './auth-provider';
@@ -56,10 +56,10 @@ const formSchema = z.object({
 });
 
 type AddSaleDialogProps = {
-  onSaleAdd: (sale: Sale) => void;
+  onCustomerUpdate: (customer: Customer) => void;
 };
 
-export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
+export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -88,28 +88,66 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
       return;
     }
     try {
-      const saleData = {
-        ...values,
+      const customersRef = collection(db, 'customers');
+      const q = query(customersRef, where('cpf', '==', values.customerCpf));
+      const querySnapshot = await getDocs(q);
+
+      const batch = writeBatch(db);
+      const newSale: Sale = {
+        id: new Date().getTime().toString(), // Unique ID for the sale within the array
         userId: user.uid,
+        product: values.product,
+        containerSize: values.containerSize,
+        observations: values.observations || '',
         date: new Date().toISOString(),
       };
 
-      const docRef = await addDoc(collection(db, 'sales'), saleData);
-      
-      const newSale: Sale = {
-        ...saleData,
-        id: docRef.id,
-      };
+      let updatedCustomer: Customer;
 
-      onSaleAdd(newSale);
+      if (querySnapshot.empty) {
+        // Customer doesn't exist, create new one
+        const newCustomerRef = doc(customersRef);
+        updatedCustomer = {
+          id: newCustomerRef.id,
+          cpf: values.customerCpf,
+          name: values.customerName,
+          phone: values.customerPhone,
+          sales: [newSale],
+          lastPurchase: newSale.date,
+        };
+        batch.set(newCustomerRef, updatedCustomer);
+      } else {
+        // Customer exists, update it
+        const customerDoc = querySnapshot.docs[0];
+        const customerData = customerDoc.data() as Customer;
+        const updatedSales = [...customerData.sales, newSale].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        
+        updatedCustomer = {
+          ...customerData,
+          name: values.customerName, // Update name and phone in case it changed
+          phone: values.customerPhone,
+          sales: updatedSales,
+          lastPurchase: updatedSales[0].date,
+        };
+        batch.update(customerDoc.ref, {
+           name: updatedCustomer.name,
+           phone: updatedCustomer.phone,
+           sales: updatedCustomer.sales,
+           lastPurchase: updatedCustomer.lastPurchase,
+        });
+      }
+
+      await batch.commit();
+
+      onCustomerUpdate(updatedCustomer);
       toast({
         title: 'Sucesso!',
-        description: 'Venda registrada com sucesso.',
+        description: 'Venda registrada e cliente atualizado.',
       });
       form.reset();
       setOpen(false);
     } catch (error) {
-      console.error("Error adding document: ", error);
+      console.error("Error adding/updating document: ", error);
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -130,7 +168,7 @@ export function AddSaleDialog({ onSaleAdd }: AddSaleDialogProps) {
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">Registrar Nova Venda</DialogTitle>
           <DialogDescription>
-            Preencha os detalhes da venda e do cliente.
+            Preencha os detalhes da venda e do cliente. Se o cliente já existir, os dados dele serão atualizados.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

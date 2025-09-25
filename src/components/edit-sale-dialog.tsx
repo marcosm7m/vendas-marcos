@@ -34,17 +34,9 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Sale } from '@/lib/types';
-import { maskCpf } from '@/lib/utils';
 import { useAuth } from './auth-provider';
 
 const formSchema = z.object({
-  customerName: z.string().min(2, {
-    message: 'O nome deve ter pelo menos 2 caracteres.',
-  }),
-  customerCpf: z.string().transform((cpf) => cpf.replace(/\D/g, '')),
-  customerPhone: z.string().min(10, {
-    message: 'O telefone deve ter pelo menos 10 caracteres.',
-  }),
   product: z.string().min(2, {
     message: 'O nome do produto deve ter pelo menos 2 caracteres.',
   }),
@@ -64,17 +56,13 @@ export function EditSaleDialog({ sale, onSaleUpdate }: EditSaleDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customerName: sale.customerName,
-      customerCpf: sale.customerCpf,
-      customerPhone: sale.customerPhone,
       product: sale.product,
       containerSize: sale.containerSize,
       observations: sale.observations,
     },
   });
 
-  const { formState, setValue, watch } = form;
-  const customerCpf = watch('customerCpf');
+  const { formState } = form;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) return;
@@ -99,60 +87,13 @@ export function EditSaleDialog({ sale, onSaleUpdate }: EditSaleDialogProps) {
         <DialogHeader>
           <DialogTitle className="font-headline text-2xl">Editar Venda</DialogTitle>
           <DialogDescription>
-            Altere os detalhes da venda e do cliente.
+            Altere os detalhes da venda.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid gap-4 py-4">
-              <FormField
-                control={form.control}
-                name="customerName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Cliente</FormLabel>
-                    <FormControl>
-                      <Input placeholder="João da Silva" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="customerCpf"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CPF</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="123.456.789-00"
-                        {...field}
-                        onChange={(e) => {
-                          const { value } = e.target;
-                          setValue('customerCpf', value);
-                        }}
-                        value={maskCpf(customerCpf)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="customerPhone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="(11) 99999-9999" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
+               <FormField
                 control={form.control}
                 name="product"
                 render={({ field }) => (
