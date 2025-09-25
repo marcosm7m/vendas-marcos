@@ -114,6 +114,7 @@ export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
           phone: values.customerPhone,
           sales: [newSale],
           lastPurchase: newSale.date,
+          createdBy: user.uid, // Add the creator's UID
         };
         batch.set(newCustomerRef, updatedCustomer);
       } else {
@@ -128,6 +129,7 @@ export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
           phone: values.customerPhone,
           sales: updatedSales,
           lastPurchase: updatedSales[0].date,
+          createdBy: customerData.createdBy || user.uid, // Preserve original creator, or set if missing
         };
         batch.update(customerDoc.ref, {
            name: updatedCustomer.name,
@@ -151,7 +153,7 @@ export function AddSaleDialog({ onCustomerUpdate }: AddSaleDialogProps) {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Não foi possível registrar a venda.',
+        description: 'Não foi possível registrar a venda. Verifique as regras de segurança.',
       });
     }
   }
